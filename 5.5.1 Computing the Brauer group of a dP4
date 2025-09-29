@@ -1,0 +1,73 @@
+//========================
+//Some preliminary objects
+//========================
+R<T>:=PolynomialRing(Rationals());
+U<u0,u1,u2,u3,u4> := PolynomialRing(Rationals(),5);
+
+Q4 := u0*u3 - 17*u1*u2;
+Q3 := -12*u0^2 + 204*u1^2 + 408*u2^2 + 25*u3^2 - 2*u4^2;
+
+X:=Scheme(ProjectiveSpace(U),[Q3,Q4]);
+//PointSearch(X,100);
+
+M3:=SymmetricMatrix(Q4);
+M4:=SymmetricMatrix(Q3);
+
+f := Determinant(M3+T*M4);
+
+print "f: ", Factorisation(f);
+print "LC(f): ", LeadingCoefficient(f);
+
+D:=Numerator(Discriminant(f));
+print "Delta:", Factorisation(D);
+
+f1:=Factorisation(f)[1][1];
+f2:=Factorisation(f)[2][1];
+f3:=Factorisation(f)[3][1];
+
+L1<rat>:=quo<R|f1>;
+L2<sqy> := quo<R | f2>;
+L3<the> := quo<R | f3>;
+
+M:=M3+rat*M4;
+vs := Matrix(Basis(Image(M)));
+epsilon1:=Determinant(vs*M*Transpose(vs));
+print "epsilon1: ", epsilon1;
+print "Is epsilon1 square?", IsSquare(epsilon1);
+print "Is Norm(epsilon1) square?", IsSquare(Norm(epsilon1));
+
+M:=M3+sqy*M4;
+vs := Matrix(Basis(Image(M)));
+Q:=QuadraticForm(vs*M*Transpose(vs));
+epsilon2:=Determinant(vs*M*Transpose(vs));
+print "epsilon2: ", epsilon2;
+print "Norm(epsilon2):", Norm(epsilon2);
+print "Is Norm(epsilon2) square?", IsSquare(Norm(epsilon2));
+print "Is epsilon2 square?", IsSquare(epsilon2);
+
+M:=M3+the*M4;
+vs := Matrix(Basis(Image(M)));
+epsilon3:=Determinant(vs*M*Transpose(vs));
+print "epsilon3: ", epsilon3;
+print "Norm(epsilon3):", IsSquare(Norm(epsilon3));
+print "Is epsilon3 square?", IsSquare(epsilon3);
+
+
+//========================
+//Computing the Azumaya algebra
+//========================
+
+POINT:=[0,0,1,120*sqy];
+
+P := POINT[1..4];
+P2 := Matrix(L2,4,1,[P[1],P[2],P[3],P[4]]);
+P4<o0,o1,o2,o3,o4> := ProjectiveSpace(L2,4);
+Q := SymmetricMatrix(Q);
+Derivative := (Q+Transpose(Q))*P2;
+TangentLine := Derivative[1][1]*(o0-P[1])+Derivative[2][1]*(o1-P[2])+Derivative[3][1]*(o2-P[3])+Derivative[4][1]*(o3-P[4]);
+
+
+Q;
+Evaluate(Q,POINT) eq 0;
+TangentLine;
+
