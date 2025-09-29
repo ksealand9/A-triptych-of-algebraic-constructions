@@ -1,0 +1,142 @@
+//========================
+//Some preliminary objects
+//========================
+P<x> := PolynomialRing(Rationals());
+P5<u0,u1,u2,u3,u4> := ProjectiveSpace(P,4);
+U := CoordinateRing(P5);
+ 
+ 
+//=======================
+//Here is the input for f
+//=======================
+
+a:=0;
+b:=1;
+c:=2;
+d:=-1; 
+f:=(x-a)*(x-b)*(x-c)*(x^2-d);
+
+rows:=[];
+for r in Roots(f) do
+    row:=[r[1]^i: i in [0..4]];
+    rows:=rows cat row;
+end for;
+row4:=[1,0,d,0,d^2];
+row5:=[0,1,0,d,0];
+M := Matrix(Rationals(), 5, 5, rows cat row4 cat row5);
+ 
+
+L<theta> := quo<P | f>;
+_<w0,w1,w2,w3,w4>:=PolynomialRing(L,5);
+ 
+fcs := Coefficients(f);
+f0 := fcs[1]; f1 := fcs[2]; f2 := fcs[3]; f3 := fcs[4]; f4 := fcs[5]; f5 := fcs[6];
+b4 := f5; b3 := theta*b4 + f4; b2 := theta*b3+f3; b1 := theta*b2+f2; b0 := theta*b1+f1;
+fprime := Evaluate(Derivative(f),theta);
+ 
+ 
+//===========================
+//Here is the input for delta
+//===========================
+
+
+delta:=Matrix(Rationals(),5,1,[2,2,2,1,1]);
+delta:=M^(-1)*delta;
+delta:=&+[delta[i][1]*theta^(i-1):i in [1..5]];
+
+
+deltau2:=delta*(w0+w1*theta+w2*theta^2+w3*theta^3+w4*theta^4)^2;
+ 
+elem := deltau2*L!b0/fprime; mselem := Monomials(elem); cselem := Coefficients(elem);
+Q0 := &+[ Trace(cselem[i])*U!mselem[i]: i in [1..#cselem]];
+ 
+elem := deltau2*b1/fprime; mselem := Monomials(elem); cselem := Coefficients(elem);
+Q1 := &+[ Trace(cselem[i])*U!mselem[i]: i in [1..#cselem]];
+ 
+elem := deltau2*b2/fprime; mselem := Monomials(elem); cselem := Coefficients(elem);
+Q2 := &+[ Trace(cselem[i])*U!mselem[i]: i in [1..#cselem]];
+ 
+elem := deltau2*b3/fprime; mselem := Monomials(elem); cselem := Coefficients(elem);
+Q3 := &+[ Trace(cselem[i])*U!mselem[i]: i in [1..#cselem]];
+ 
+elem := deltau2*b4/fprime; mselem := Monomials(elem); cselem := Coefficients(elem);
+Q4 := &+[ Trace(cselem[i])*U!mselem[i]: i in [1..#cselem]];
+ 
+//============================
+//Now we check what the Brauer group is of {Q3,Q4}
+//============================
+X := Scheme(P5,[Q3,Q4]);
+
+M1 := SymmetricMatrix(Q3);
+M2 := SymmetricMatrix(Q4);
+f := Determinant(M1*x+M2);
+Factorisation(f);
+
+L<theta> := quo<P | f>;
+Lis, map := AbsoluteAlgebra(L);
+rts := map(theta);
+
+deltas := <Determinant(vs*M*Transpose(vs)): i in [1..NumberOfComponents(Lis)]| true where vs := Matrix(Basis(Image(M))) where M := Matrix(rts[i]*ChangeRing(M1,Li)+ChangeRing(M2,Li)) where Li := Lis[i]>;
+delta := L!Inverse(map)(Lis!<deltas[i] : i in [1..NumberOfComponents(Lis)]>);
+
+Length:=#(Factorisation(f));
+
+Factors:=function(f,k)
+list:={};
+for i in Factorisation(f) do
+    if Degree(i[1]) eq k then
+        Include(~list, <i[1],Index(Factorisation(f), i)>);
+    end if;
+end for;
+    return list, Type(list);
+end function;
+
+Factors3:=function(f)
+list:={};
+for i in Factorisation(f) do
+    if Degree(i[1]) eq 1 then
+        Include(~list, <i[1],Index(Factorisation(f), i)>);
+    end if;
+    if Degree(i[1]) eq 3 then
+        Include(~list, <i[1],Index(Factorisation(f), i)>);
+    end if;
+end for;
+    return list;
+end function;
+
+BrauerGroup:=function(f,deltas)
+correct:=[];
+if #Factors(f,5) eq 1 then
+    return CyclicGroup(1);
+else
+    if #Factors(f,4) eq 1 then
+        return CyclicGroup(1);
+    end if;
+end if;
+if #Factors(f,1) ge 3 then
+for s in Subsets(Factors(f,1),3) do
+    Test1 := &and[IsSquare(deltas[i[2]]) ne true : i in s];
+    Test2 := &and[IsSquare(LL!deltas[i[2]]*LL!deltas[j[2]]) where LL:=Compositum(Lis[i[2]],Lis[j[2]]): i, j in t, t in Subsets(s,2)]; 
+    if Test1 and Test2 then
+        Append(~correct, s);
+        r:=correct[1];
+        return "BrX/Br0X=C2 x C2";
+    end if;
+end for;
+end if;
+for s in Exclude(Subsets(Factors(f,2)),{}) do
+    Test1 := &and[IsSquare(deltas[i[2]]) ne true : i in s];
+    Test2 := IsSquare(&*[Norm(deltas[i[2]]): i in s]) eq true;
+if Test1 and Test2 then
+    for t in Factors3(f) do
+	if IsSquare(deltas[t[2]]) ne true then
+            return "BrX/Br0X=C2";
+	end if;
+end for;
+end if;
+end for;
+    return CyclicGroup(1);
+end function;
+
+
+BrauerGroup(f,deltas);
