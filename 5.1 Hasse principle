@@ -1,0 +1,9 @@
+P<x,y,z,w>:=PolynomialRing(Rationals(),4);
+U:=ProjectiveSpace(P);
+S:=x^2+3*y^2+3*z^2-w^2;
+S:=Scheme(U,S);
+for p in PrimesUpTo(23) do
+    IsLocallySoluble(S,p);
+end for;
+
+PointSearch(S,2);
