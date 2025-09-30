@@ -9,6 +9,8 @@ Q3 := -12*u0^2 + 204*u1^2 + 408*u2^2 + 25*u3^2 - 2*u4^2;
 
 X:=Scheme(ProjectiveSpace(U),[Q3,Q4]);
 //PointSearch(X,100);
+//print "Is X ELS?", &and[IsLocallySoluble(X,p):p in PrimesUpTo(100)];
+
 
 M3:=SymmetricMatrix(Q4);
 M4:=SymmetricMatrix(Q3);
@@ -58,6 +60,8 @@ print "Is epsilon3 square?", IsSquare(epsilon3);
 //========================
 
 POINT:=[0,0,1,120*sqy];
+Q;
+Evaluate(Q,POINT) eq 0;
 
 P := POINT[1..4];
 P2 := Matrix(L2,4,1,[P[1],P[2],P[3],P[4]]);
@@ -66,8 +70,19 @@ Q := SymmetricMatrix(Q);
 Derivative := (Q+Transpose(Q))*P2;
 TangentLine := Derivative[1][1]*(o0-P[1])+Derivative[2][1]*(o1-P[2])+Derivative[3][1]*(o2-P[3])+Derivative[4][1]*(o3-P[4]);
 
-
-Q;
-Evaluate(Q,POINT) eq 0;
 TangentLine;
 
+//========================
+//Computing the BMO?
+//========================
+
+ELSprimes:=[x[1]:x in Factorisation(D)];
+print "Primes of bad reduction:", ELSprimes;
+
+expr := ((3*u0-5*u3)^2 - 2*u2^2)/(u4+u2)^2;
+
+for p in ELSprimes cat [11] do
+    _,point:=IsLocallySoluble(X,p);
+    print p, point;
+    HilbertSymbol(17,Integers()!Evaluate(expr,point),p);
+end for;
